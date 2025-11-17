@@ -1,0 +1,19 @@
+{
+  "name": "mock-oidc-provider",
+  "version": "1.0.0",
+  "description": "A mock OIDC provider",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "cors": "^2.8.5",
+    "express": "^4.19.2",
+    "node-jose": "^2.2.0",
+    "uuid": "^9.0.1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC"
+}
