@@ -18,6 +18,11 @@ const clientConfig = {
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
 
+// Healthz Endpoint
+app.get('/healthz', (req, res) => {
+    res.status(200).send('ok');
+});
+
 // In-memory store for authorization codes
 const authCodes = new Map();
 
