@@ -5,17 +5,18 @@ const { v4: uuidv4 } = require('uuid');
 const cors = require('cors');
 
 const app = express();
-const port = 3000;
+
+// Read configuration from environment variables or fallback to defaults
+const port = process.env.PORT || 3000;
+const issuer = process.env.OIDC_ISSUER || `http://localhost:${port}`;
+const clientConfig = {
+    clientId: process.env.OIDC_CLIENT_ID || 'my-client',
+    clientSecret: process.env.OIDC_CLIENT_SECRET || 'my-secret',
+    redirectUri: process.env.OIDC_DEFAULT_REDIRECT_URI || 'http://localhost:4200/api/auth/callback', // Can be overridden by client
+};
 
 app.use(bodyParser.urlencoded({ extended: true }));
 app.use(cors());
-
-const issuer = `http://localhost:${port}`;
-const clientConfig = {
-    clientId: 'my-client',
-    clientSecret: 'my-secret',
-    redirectUri: 'http://localhost:4200/api/auth/callback', // A default, but client can override
-};
 
 // In-memory store for authorization codes
 const authCodes = new Map();
