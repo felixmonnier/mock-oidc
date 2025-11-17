@@ -27,12 +27,16 @@ app.get('/healthz', (req, res) => {
 const authCodes = new Map();
 
 let keyStore = jose.JWK.createKeyStore();
-let jwks;
 
 // Generate a key pair for signing JWTs
-keyStore.generate('RSA', 2048, { alg: 'RS256', use: 'sig' }).then(key => {
-    jwks = keyStore.toJSON();
+keyStore.generate('RSA', 2048, { alg: 'RS256', use: 'sig' }).then(() => {
+    const jwks = keyStore.toJSON();
     console.log('Generated JWKS:', JSON.stringify(jwks, null, 2));
+
+    app.listen(port, '0.0.0.0', () => {
+        console.log(`Mock OIDC provider listening at http://0.0.0.0:${port}`);
+        console.log(`Configured issuer: ${issuer}`);
+    });
 });
 
 // OIDC Discovery Endpoint
@@ -214,10 +218,4 @@ app.post('/token', async (req, res) => {
         expires_in: 3600,
         id_token: idToken,
     });
-});
-
-
-app.listen(port, '0.0.0.0', () => {
-    console.log(`Mock OIDC provider listening at http://0.0.0.0:${port}`);
-    console.log(`Configured issuer: ${issuer}`);
 });
