@@ -217,6 +217,7 @@ app.post('/token', async (req, res) => {
 });
 
 
-app.listen(port, () => {
-    console.log(`Mock OIDC provider listening at ${issuer}`);
+app.listen(port, '0.0.0.0', () => {
+    console.log(`Mock OIDC provider listening at http://0.0.0.0:${port}`);
+    console.log(`Configured issuer: ${issuer}`);
 });
