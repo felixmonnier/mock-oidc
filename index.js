@@ -60,6 +60,34 @@ app.get('/jwks', (req, res) => {
     res.json(jwks);
 });
 
+// Mocked user presets (including email)
+const mockedUsers = [
+    {
+        label: "Emilie LEYGONIE",
+        sub: "ELE05001",
+        firstName: "Emilie",
+        lastName: "LEYGONIE",
+        picture: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSTcj2ohWoj1sO8BzVWLf4xL3Zpf4-tGZvTiQ&s",
+        email: "emilie.leygonie@gide.com"
+    },
+    {
+        label: "Aude AVRIN",
+        sub: "AAV02001",
+        firstName: "Aude",
+        lastName: "AVRIN",
+        picture: "https://media.licdn.com/dms/image/v2/D4E03AQEoKp1rPO0VxQ/profile-displayphoto-shrink_200_200/B4EZR6ZCrWGYAY-/0/1737220173086?e=2147483647&v=beta&t=qR1qoAHgwjzstFvQY5BnayGVSjwPpzgVPi12evLFhYQ",
+        email: "aude.avrin@gide.com"
+    },
+    {
+        label: "Sebastien LAMY-WILLING",
+        sub: 'SLA12001',
+        firstName: 'Sebastien',
+        lastName: "LAMY-WILLING",
+        picture: "https://www.gide-realestate.com/wp-content/uploads/2023/12/Sebastien-Lamy-Willing.jpg",
+        email: "sebastien.lamy-willing@gide.com"
+    },
+];
+
 // Authorization Endpoint
 app.get('/authorize', (req, res) => {
     const {
@@ -77,6 +105,11 @@ app.get('/authorize', (req, res) => {
         return res.status(400).send('Unsupported response_type');
     }
 
+    // HTML output: allow choosing preset user or custom entry
+    const userOptions = mockedUsers.map((user, idx) => `
+        <option value="${idx}">${user.label}</option>
+    `).join("");
+
     const form = `
         <!DOCTYPE html>
         <html>
@@ -87,10 +120,64 @@ app.get('/authorize', (req, res) => {
                 form { background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 400px; }
                 h2 { text-align: center; color: #333; }
                 label { display: block; margin-bottom: 0.5rem; color: #555; }
-                input { width: 100%; padding: 0.5rem; margin-bottom: 1rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
+                input, select { width: 100%; padding: 0.5rem; margin-bottom: 1rem; border: 1px solid #ccc; border-radius: 4px; box-sizing: border-box; }
                 button { width: 100%; padding: 0.75rem; background-color: #007bff; color: white; border: none; border-radius: 4px; font-size: 1rem; cursor: pointer; }
                 button:hover { background-color: #0056b3; }
+                .preset-wrapper { margin-bottom: 1rem; }
             </style>
+            <script>
+                let mockedUsers = ${JSON.stringify(mockedUsers)};
+                window.addEventListener('DOMContentLoaded', () => {
+                    const presetSelect = document.getElementById('presetUser');
+                    const customToggle = document.getElementById('customToggle');
+                    
+                    function setFieldsFromUser(user) {
+                        document.getElementById('sub').value = user.sub;
+                        document.getElementById('firstName').value = user.firstName;
+                        document.getElementById('lastName').value = user.lastName;
+                        document.getElementById('picture').value = user.picture;
+                        document.getElementById('email').value = user.email || '';
+                    }
+
+                    presetSelect.addEventListener('change', function() {
+                        if (this.value !== "") {
+                            const idx = parseInt(this.value);
+                            setFieldsFromUser(mockedUsers[idx]);
+                            toggleCustomFields(true);
+                        }
+                    });
+                    
+                    customToggle.addEventListener('change', function() {
+                        if (this.checked) {
+                            presetSelect.value = "";
+                            // Enable fields for editing
+                            toggleCustomFields(false);
+                        } else {
+                            // Reset fields to first user if present
+                            presetSelect.value = "0";
+                            setFieldsFromUser(mockedUsers[0]);
+                            toggleCustomFields(true);
+                        }
+                    });
+
+                    function toggleCustomFields(disabled) {
+                        ['sub', 'firstName', 'lastName', 'picture', 'email'].forEach(id => {
+                            document.getElementById(id).readOnly = disabled;
+                        });
+                    }
+
+                    // Default: select first user, fields readonly
+                    if (mockedUsers.length > 0) {
+                        presetSelect.value = "0";
+                        setFieldsFromUser(mockedUsers[0]);
+                        toggleCustomFields(true);
+                    } else {
+                        // Fallback: enable custom mode
+                        customToggle.checked = true;
+                        toggleCustomFields(false);
+                    }
+                });
+            </script>
         </head>
         <body>
             <form action="/login" method="post">
@@ -99,18 +186,31 @@ app.get('/authorize', (req, res) => {
                 <input type="hidden" name="redirect_uri" value="${redirect_uri}">
                 <input type="hidden" name="scope" value="${scope}">
                 <input type="hidden" name="state" value="${state}">
+                <div class="preset-wrapper">
+                    <label for="presetUser">Select a mocked user:</label>
+                    <select id="presetUser">
+                        ${userOptions}
+                    </select>
+                </div>
+                <div style="margin-bottom: 1rem;">
+                    <input type="checkbox" id="customToggle">
+                    <label for="customToggle" style="display: inline;">Enter custom user details</label>
+                </div>
                 <label for="sub">User ID (sub):</label>
-                <input type="text" id="sub" name="sub" value="user123" required>
+                <input type="text" id="sub" name="sub" required>
+
                 <label for="firstName">First Name:</label>
-                <input type="text" id="firstName" name="firstName" value="John" required>
+                <input type="text" id="firstName" name="firstName" required>
+
                 <label for="lastName">Last Name:</label>
-                <input type="text" id="lastName" name="lastName" value="Doe" required>
-                <label for="email">Email:</label>
-                <input type="email" id="email" name="email" value="john.doe@example.com" required>
+                <input type="text" id="lastName" name="lastName" required>
+
                 <label for="picture">Picture URL:</label>
-                <input type="text" id="picture" name="picture" value="https://example.com/avatar.jpg">
-                <label for="departmentCodes">Department Codes (comma-separated):</label>
-                <input type="text" id="departmentCodes" name="departmentCodes" value="D01,D02">
+                <input type="text" id="picture" name="picture">
+
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" required>
+
                 <button type="submit">Login</button>
             </form>
         </body>
@@ -118,6 +218,7 @@ app.get('/authorize', (req, res) => {
     `;
     res.send(form);
 });
+
 
 // Form submission endpoint
 app.post('/login', (req, res) => {
@@ -129,9 +230,8 @@ app.post('/login', (req, res) => {
         sub,
         firstName,
         lastName,
-        email,
         picture,
-        departmentCodes
+        email
     } = req.body;
 
     const code = uuidv4();
@@ -139,9 +239,8 @@ app.post('/login', (req, res) => {
         sub,
         firstName,
         lastName,
-        email,
         picture,
-        departmentCodes: departmentCodes ? departmentCodes.split(',').map(s => s.trim()) : []
+        email
     };
 
     authCodes.set(code, { claims, clientId: client_id, redirectUri: redirect_uri, scope });
@@ -198,14 +297,17 @@ app.post('/token', async (req, res) => {
 
     authCodes.delete(code); // Code can only be used once
 
+    // No need to filter out email now; include all claims
+    const claims = authCodeData.claims || {};
+
     const now = Math.floor(Date.now() / 1000);
     const payload = {
         iss: issuer,
         aud: client_id,
-        sub: authCodeData.claims.sub,
+        sub: claims.sub,
         exp: now + 3600, // Expires in 1 hour
         iat: now,
-        ...authCodeData.claims
+        ...claims
     };
 
     const key = keyStore.get(jwks.keys[0].kid);
