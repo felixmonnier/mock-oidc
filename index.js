@@ -12,7 +12,7 @@ const issuer = process.env.OIDC_ISSUER || `http://localhost:${port}`;
 const clientConfig = {
     clientId: process.env.OIDC_CLIENT_ID || 'my-client',
     clientSecret: process.env.OIDC_CLIENT_SECRET || 'my-secret',
-    redirectUri: process.env.OIDC_DEFAULT_REDIRECT_URI || 'http://localhost:4200/api/auth/callback', // Can be overridden by client
+    redirectUri: process.env.OIDC_DEFAULT_REDIRECT_URI || 'http://localhost:4200/api/auth/callback',
 };
 
 app.use(bodyParser.urlencoded({ extended: true }));
@@ -27,10 +27,11 @@ app.get('/healthz', (req, res) => {
 const authCodes = new Map();
 
 let keyStore = jose.JWK.createKeyStore();
+let jwks;
 
 // Generate a key pair for signing JWTs
 keyStore.generate('RSA', 2048, { alg: 'RS256', use: 'sig' }).then(() => {
-    const jwks = keyStore.toJSON();
+    jwks = keyStore.toJSON();
     console.log('Generated JWKS:', JSON.stringify(jwks, null, 2));
 
     app.listen(port, '0.0.0.0', () => {
