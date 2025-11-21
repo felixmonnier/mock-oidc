@@ -79,12 +79,12 @@ const mockedUsers = [
         email: "aude.avrin@gide.com"
     },
     {
-        label: "Sebastien LAMY-WILLING",
-        sub: 'SLA12001',
-        firstName: 'Sebastien',
-        lastName: "LAMY-WILLING",
-        picture: "https://www.gide-realestate.com/wp-content/uploads/2023/12/Sebastien-Lamy-Willing.jpg",
-        email: "sebastien.lamy-willing@gide.com"
+        label: "Neil BEYNE",
+        sub: '1BEYN101',
+        firstName: 'Neil',
+        lastName: "BEYNE",
+        picture: "",
+        email: "neil.beyne@gide.com"
     },
 ];
 
